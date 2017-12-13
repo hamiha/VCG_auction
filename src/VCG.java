@@ -1,58 +1,131 @@
 import java.util.Arrays;
 import java.text.DecimalFormat;
 
+
+
 //TODO: change winner array to all -1
 public class VCG {
 	
 	private static DecimalFormat form = new DecimalFormat(".##");
 		
 	public static void main(String[] args) throws Exception {
-		//					  1   2   3   4   5   6   7   8   9  10
-//        int bidderVal[]   = {31, 50, 16, 60, 31, 60, 35, 48, 60, 51, };//total value of each bidder
-//        int bidderUnit[]  = { 3,  2,  5,  3,  2,  3,  1,  6,  1,  2};//number of unit of each bidder wants
-       
-        double sellerUnit = Distribution.sellUnit; //total number of units of seller
-        
-        Distribution.generateData();
-        
-        double bidderVal[] = Distribution.value;
-        double bidderUnit[] = Distribution.unit;
-        
-        double[] newVal = generateBiddingValue(bidderVal, bidderUnit);
-        
-        System.out.println(Arrays.toString(newVal));
-        
-        double[][] alloc = genMatrixAlloc(newVal, bidderUnit, sellerUnit, false, 0);
-        
-//        for (int[] rows : alloc) {
+		
+		double[] plotTradingPrice = new double[Distribution.numAuction];
+		double[] plotRatio = new double[Distribution.numAuction];
+		double maxAvgPriceUnit = 0, minAvgPriceUnit = Double.MAX_VALUE, totalPriceUnit = 0;
+		double maxAvgRatio = 0, minAvgRatio = Double.MAX_VALUE, totalRatio = 0;
+		double deviation = 0.01, maxDeviation = 1.01;
+		
+		double[] plotAvgPrice = new double[100];
+		double[] plotUpPrice = new double[100];
+		double[] plotLowPrice = new double[100];
+		double[] plotAvgRatio = new double[100];
+		double[] plotUpRatio = new double[100];
+		double[] plotLowRatio = new double[100];
+		
+		int plotIndex = 0;
+		
+		while(deviation <= maxDeviation) {
+			
+			for(int i=0; i < Distribution.numAuction; i++) {
+				
+				double[][] temp = processAuction(deviation,0);
+				plotTradingPrice[i] = temp[0][0];
+				plotRatio[i] = temp[0][1];
+				
+				if (maxAvgPriceUnit < plotTradingPrice[i]) maxAvgPriceUnit = plotTradingPrice[i];
+				if (minAvgPriceUnit > plotTradingPrice[i]) minAvgPriceUnit = plotTradingPrice[i];
+				totalPriceUnit += plotTradingPrice[i];
+				
+				if (maxAvgRatio < plotRatio[i]) maxAvgRatio = plotRatio[i];
+				if (minAvgRatio > plotRatio[i]) minAvgRatio = plotRatio[i];
+				totalRatio += plotRatio[i];
+		
+			}
+			System.out.println("PriceUnit \n max: " + form.format(maxAvgPriceUnit-totalPriceUnit/10) + " - min: " + form.format(totalPriceUnit/10 - minAvgPriceUnit) + " - avg: " + form.format(totalPriceUnit/10));
+			System.out.println("Ratio \n max: " + form.format(maxAvgRatio-totalRatio/10) + " - min: " + form.format(totalRatio/10 - minAvgRatio) + " - avg: " + form.format(totalRatio/10));		
+			
+			plotAvgPrice[plotIndex] = totalPriceUnit/10;
+			plotUpPrice[plotIndex] = maxAvgPriceUnit-totalPriceUnit/10;
+			plotLowPrice[plotIndex] = totalPriceUnit/10 - minAvgPriceUnit;
+			
+			plotAvgRatio[plotIndex] = totalRatio/10;
+			plotUpRatio[plotIndex] = maxAvgRatio-totalRatio/10;
+			plotLowRatio[plotIndex] = totalRatio/10 - minAvgRatio;
+			
+			totalPriceUnit = 0;
+			totalRatio = 0;
+					
+			plotIndex++;
+			deviation += 0.01;
+			System.out.println(deviation);
+		}
+		
+		System.out.println(plotAvgPrice.length);
+		
+		System.out.println("-------------------------------Plot Price------------------------------");
+		System.out.println(Arrays.toString(plotAvgPrice));
+		System.out.println(Arrays.toString(plotUpPrice));
+		System.out.println(Arrays.toString(plotLowPrice));
+		System.out.println("-------------------------------Plot Ratio------------------------------");
+		System.out.println(Arrays.toString(plotAvgRatio));
+		System.out.println(Arrays.toString(plotUpRatio));
+		System.out.println(Arrays.toString(plotLowRatio));
+	}
+	
+	public static double[][] processAuction(double priceDeviation, double unitDeviation) {
+    
+      double sellerUnit = Distribution.sellUnit; //total number of units of seller
+      
+      Distribution.generateData(priceDeviation, unitDeviation);
+      
+      double bidderVal[] = Distribution.value;
+      double bidderUnit[] = Distribution.unit;
+      
+      double[] newVal = generateBiddingValue(bidderVal, bidderUnit);
+      
+      System.out.println(Arrays.toString(newVal));
+      
+      double[][] alloc = genMatrixAlloc(newVal, bidderUnit, sellerUnit, false, 0);
+      
+//      for (int[] rows : alloc) {
 //	      for (int col : rows) {
 //	          System.out.format("%5d", col);
 //	      }
 //	      System.out.println();
-//        }
-        
-        getWelfare(alloc);
-        
-        double[] winners = determineWinner(newVal, bidderUnit, sellerUnit, alloc);
-        
-        double[][] price = genPrice(newVal, bidderUnit, sellerUnit, winners);
-       
-        System.out.println("-----------------------------------------------------------------");
-        System.out.println("Winners |TPrice |BPrice |Unit   |UTotal |Revenue|Ratio  |Avg    |");
-        for (double[] rows : price) {
+//      }
+      
+      getWelfare(alloc);
+      
+      double[] winners = determineWinner(newVal, bidderUnit, sellerUnit, alloc);
+      
+      double[][] price = genPrice(newVal, bidderUnit, sellerUnit, winners);
+     
+      System.out.println("-----------------------------------------------------------------");
+      System.out.println("Winners |TPrice |BPrice |Unit   |UTotal |Revenue|Ratio  |Avg    |");
+      for (double[] rows : price) {
 	      for (double col : rows) {
 	          System.out.print(form.format(col) + "\t|");
 	      }
 	      System.out.println();
-        }
-        System.out.println("-----------------------------------------------------------------");
-//        calculate meanprice per unit
-        int row = price.length;
-        int col = price[0].length;
-        
-        System.out.println("Total revenue: " + form.format(price[row-1][5]) + " \nTotal unit sold: " + form.format(price[row-1][4]));
-        System.out.println("Price per unit: " + form.format(price[row-1][5]/price[row-1][4]));
-    }
+      }
+      System.out.println("-----------------------------------------------------------------");
+//      calculate meanprice per unit
+      int row = price.length;
+      int col = price[0].length;
+      
+      System.out.println("Total revenue: " + form.format(price[row-1][5]) + " \nTotal unit sold: " + form.format(price[row-1][4]));
+      System.out.println("Price per unit: " + form.format(price[row-1][5]/price[row-1][4]));
+      System.out.println("Avg trading price ratio: " + form.format(price[row-1][col-1]));
+      System.out.println("-----------------------------------------------------------------");
+      
+      double temp[][] = new double[1][2];
+      //price per unit
+      temp[0][0] = price[row-1][5]/price[row-1][4];
+      //avg trading price
+      temp[0][1] = price[row-1][col-1];
+      return temp;
+	}
 	
 	public static double[] generateBiddingValue(double val[], double unit[]) {
 		int N = val.length;
