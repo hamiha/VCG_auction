@@ -14,6 +14,7 @@ public class Distribution {
 	protected static double meanUnit = 5, defaultUnitDeviation = 1;
 	
 	private static DecimalFormat form = new DecimalFormat("#.##");
+	private static DecimalFormat formInt = new DecimalFormat("#");
 	
 	public static void generateData(double priceDeviation, double unitDeviation) {
 			
@@ -49,8 +50,38 @@ public class Distribution {
 			}
 		}
 		
-		System.out.println(Arrays.toString(value));
-		System.out.println(Arrays.toString(unit));
+//		PRINT OUT VALUE AND QUANTITY OF EACH BIDDER
+		System.out.println("\n-----------------NEW AUCTION--------------------");
+		System.out.println("------------------------------------------------------------------------------------------------");
+		System.out.print("Bider ID   ");
+		for(int i=0; i<unit.length; i++) {
+			if(i==(unit.length-1))
+				System.out.print("|" + (i+1) + "\t|\n");
+			else System.out.print("|" + (i+1) + "    \t");
+		}
+		System.out.print("Value      ");
+		printFormatDouble(value);
+		System.out.print("Quantity   ");
+		printFormatInt(unit);
+		
+		
+	}
+//	PRINT AUCTION INFO
+//	PRINT UNIT OF BIDDER
+	public static void printFormatInt(double[] inputArray) {
+		for(int i=0; i<inputArray.length; i++) {
+			if(i==(inputArray.length-1))
+				System.out.print("|" +formInt.format(inputArray[i]) + "\t|\n");
+			else System.out.print("|" + formInt.format(inputArray[i])+ "     \t");
+		}
+	}
+//	PRINT VALUE OF BIDDER
+	public static void printFormatDouble(double[] inputArray) {
+		for(int i=0; i<inputArray.length; i++) {
+			if(i==(inputArray.length-1))
+				System.out.print("|" +form.format(inputArray[i]) + "\t|\n");
+			else System.out.print("|" + form.format(inputArray[i])+ " \t");
+		}
 		
 	}
 	

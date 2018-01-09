@@ -6,8 +6,9 @@ import java.text.DecimalFormat;
 //TODO: change winner array to all -1
 public class VCG {
 	
-	private static DecimalFormat form = new DecimalFormat(".##");
-		
+	private static DecimalFormat form = new DecimalFormat("#.##");
+	private static DecimalFormat formInt = new DecimalFormat("#");
+	
 	public static void main(String[] args) throws Exception {
 		
 		double[] plotTradingPrice = new double[Distribution.numAuction];
@@ -58,19 +59,20 @@ public class VCG {
 					
 			plotIndex++;
 			deviation += 0.01;
-			System.out.println(deviation);
+//			System.out.println("Deviation: " + deviation);
 		}
 		
-		System.out.println(plotAvgPrice.length);
+//		System.out.println("Length of the plot: " + plotAvgPrice.length);
 		
 		System.out.println("-------------------------------Plot Price------------------------------");
-		System.out.println(Arrays.toString(plotAvgPrice));
-		System.out.println(Arrays.toString(plotUpPrice));
-		System.out.println(Arrays.toString(plotLowPrice));
+//		System.out.println(Arrays.toString(plotAvgPrice));
+		printFormatDouble(plotAvgPrice);
+		printFormatDouble(plotUpPrice);
+		printFormatDouble(plotLowPrice);
 		System.out.println("-------------------------------Plot Ratio------------------------------");
-		System.out.println(Arrays.toString(plotAvgRatio));
-		System.out.println(Arrays.toString(plotUpRatio));
-		System.out.println(Arrays.toString(plotLowRatio));
+		printFormatDouble(plotAvgRatio);
+		printFormatDouble(plotUpRatio);
+		printFormatDouble(plotLowRatio);
 	}
 	
 	public static double[][] processAuction(double priceDeviation, double unitDeviation) {
@@ -84,7 +86,11 @@ public class VCG {
       
       double[] newVal = generateBiddingValue(bidderVal, bidderUnit);
       
-      System.out.println(Arrays.toString(newVal));
+//      PRINT OUT TOTAL VALUE IF EACH BIDDER
+      System.out.print("Total value");
+      Distribution.printFormatDouble(newVal);
+      System.out.println("------------------------------------------------------------------------------------------------");
+      
       
       double[][] alloc = genMatrixAlloc(newVal, bidderUnit, sellerUnit, false, 0);
       
@@ -101,28 +107,34 @@ public class VCG {
       
       double[][] price = genPrice(newVal, bidderUnit, sellerUnit, winners);
      
+      
       System.out.println("-----------------------------------------------------------------");
       System.out.println("Winners |TPrice |BPrice |Unit   |UTotal |Revenue|Ratio  |Avg    |");
+//      PRINT RESULT OF AUCTION
       for (double[] rows : price) {
-	      for (double col : rows) {
-	          System.out.print(form.format(col) + "\t|");
+	      for (int i=0; i<rows.length; i++) {
+	    	  if(i==0 || i==3 || i==4)
+	    		  System.out.print(formInt.format(rows[i]) + "\t|");
+	    	  else 
+	    		  System.out.print(form.format(rows[i]) + "\t|");
 	      }
 	      System.out.println();
       }
       System.out.println("-----------------------------------------------------------------");
-//      calculate meanprice per unit
+      
+//      CALCULATE MEANPRICE PER UNIT
       int row = price.length;
       int col = price[0].length;
       
-      System.out.println("Total revenue: " + form.format(price[row-1][5]) + " \nTotal unit sold: " + form.format(price[row-1][4]));
+      System.out.println("Total revenue: " + form.format(price[row-1][5]) + " \nTotal unit sold: " + formInt.format(price[row-1][4]));
       System.out.println("Price per unit: " + form.format(price[row-1][5]/price[row-1][4]));
       System.out.println("Avg trading price ratio: " + form.format(price[row-1][col-1]));
-      System.out.println("-----------------------------------------------------------------");
+      
       
       double temp[][] = new double[1][2];
-      //price per unit
+//      PRICE PER UNIT
       temp[0][0] = price[row-1][5]/price[row-1][4];
-      //avg trading price
+//      AVG TRADING PRICE
       temp[0][1] = price[row-1][col-1];
       return temp;
 	}
@@ -137,7 +149,7 @@ public class VCG {
 	}
 	
 	public static double[] determineWinner(double val[], double unit[], double sUnit, double[][] alloc) {
-		//Determine winner
+//		DETERMINE WINNERS
 		int[] winners = new int[val.length];
 		Arrays.fill(winners, -1);
 		int indexWinners = 0;
@@ -156,19 +168,17 @@ public class VCG {
 			else bidder--;
 		}
 		
-		//remove whos do not win
-		
-//		System.out.println("Winner array: " + Arrays.toString(winners));
-		
+//		REMOVE BIDDERS DONT WIN	AND PRINT WINNERS	
 		double[] newWinners = new double[indexWinners];
+		System.out.print("Winners: ");
 		for(int i=0; i<winners.length; i++) {
 			if(winners[i]>-1) {
 				newWinners[i] = winners[i];
+				System.out.print(formInt.format(winners[i]) + ", ");
 			}
-		}
-		
-		System.out.println("winners = " + Arrays.toString(newWinners));
-		System.out.println("Social welfare = " + form.format(alloc[val.length][(int) sUnit]));
+		}	
+//		PRINT SOCIAL WELFARE
+		System.out.println("\nSocial welfare: " + form.format(alloc[val.length][(int) sUnit]));
 		
 		return newWinners;
 	}
@@ -177,18 +187,21 @@ public class VCG {
 		double[][] allocPrice = new double[winners.length][8];
 		double totalUnitSold = 0, totalRevenue = 0, totalRatio = 0;
 		double welfare = getWelfare(genMatrixAlloc(val, unit, sUnit, false, 0));
-//		System.out.println("welfare: " + welfare);
+
+//		------PRINT STEP BY STEP TO CALCULATE TRADING PRICE-----
+//		System.out.println("-------Step by step-------");
+		
+//		CALCULATE SOCIAL WELFARE
 		for(int i=0; i<winners.length; i++) {
 			//winner ID
 			allocPrice[i][0] = winners[i];
 			double[] tempVal = val.clone();
 			double[] tempUnit = unit.clone();
-			System.out.println("winner: " + winners[i]);
 	    	//get welfare when bidder i is absent
 			double newWelfare = getWelfare(genMatrixAlloc(tempVal, tempUnit, sUnit, true, winners[i]-1));
-			System.out.println("if i were absent: " + form.format(newWelfare));
+			//get others welfare when i present
 			double othersWelfare = welfare - val[(int) (winners[i]-1)];
-			System.out.println("Others when i is present: " + form.format(othersWelfare));
+			
 			
 			//trading price
 			if(newWelfare - othersWelfare == 0) allocPrice[i][1] = val[(int) (winners[i]-1)];
@@ -208,8 +221,19 @@ public class VCG {
 			//avg ratito
 			totalRatio += allocPrice[i][6];
 			allocPrice[i][7] = totalRatio / (i+1);
+			
+////			------PRINT STEP BY STEP TO CALCULATE TRADING PRICE-----
+////			PRINT WINNER
+//			System.out.println("Winner: " + formInt.format(winners[i]));
+////			PRINT SOCIAL WELFARE IF WINNER ABSENT
+//			System.out.println("If bidder were absent: " + form.format(newWelfare));
+////			PRINT OTHERS WELFARE WHEN WINNER PRESENT
+//			System.out.println("Others when i is present: " + form.format(othersWelfare));
+////			PRINT TRADING PRICE
+//			System.out.println("Trading price: " + form.format(allocPrice[i][1]));
+//			
 		}
-		
+//		-----END PROCESS-----
 		return allocPrice;
 	}
 
@@ -258,4 +282,12 @@ public class VCG {
         return V;
     }
     
+    public static void printFormatDouble(double[] inputArray) {
+    	System.out.print("[");
+    	for(int i=0; i<inputArray.length; i++) {
+			if(i==(inputArray.length-1))
+				System.out.print(form.format(inputArray[i]) + "]\n");
+			else System.out.print(form.format(inputArray[i])+ ",");
+		}
+    }
 }
