@@ -1,10 +1,11 @@
 import java.util.Arrays;
+import java.awt.TextArea;
 import java.text.DecimalFormat;
 
 
 
 //TODO: change winner array to all -1
-public class VCG {
+public class VCGMechanism {
 	
 	private static DecimalFormat form = new DecimalFormat("#.##");
 	private static DecimalFormat formInt = new DecimalFormat("#");
@@ -65,7 +66,6 @@ public class VCG {
 //		System.out.println("Length of the plot: " + plotAvgPrice.length);
 		
 		System.out.println("-------------------------------Plot Price------------------------------");
-//		System.out.println(Arrays.toString(plotAvgPrice));
 		printFormatDouble(plotAvgPrice);
 		printFormatDouble(plotUpPrice);
 		printFormatDouble(plotLowPrice);
@@ -75,6 +75,14 @@ public class VCG {
 		printFormatDouble(plotLowRatio);
 	}
 	
+	public static void runSimulation(TextArea message) {
+		for(int i=0; i<Distribution.numAuction; i++) {
+			processAuction(message);
+		}
+		
+	} 
+	
+//	PROCESS AUCTION WITH LOG
 	public static double[][] processAuction(double priceDeviation, double unitDeviation) {
     
       double sellerUnit = Distribution.sellUnit; //total number of units of seller
@@ -88,6 +96,7 @@ public class VCG {
       
 //      PRINT OUT TOTAL VALUE IF EACH BIDDER
       System.out.print("Total value");
+      
       Distribution.printFormatDouble(newVal);
       System.out.println("------------------------------------------------------------------------------------------------");
       
@@ -137,6 +146,100 @@ public class VCG {
 //      AVG TRADING PRICE
       temp[0][1] = price[row-1][col-1];
       return temp;
+	}
+	
+//	PROCESS AUCTION WITH INTERFACE
+	public static void processAuction(TextArea message) {
+	      double sellerUnit = Distribution.sellUnit; //total number of units of seller
+	      
+	      Distribution.generateData(Distribution.defaultPriceDeviation, Distribution.defaultUnitDeviation);
+	      
+	      double bidderVal[] = Distribution.value;
+	      double bidderUnit[] = Distribution.unit;
+	      
+	      double[] newVal = generateBiddingValue(bidderVal, bidderUnit);
+
+//	      PRINT OUT TOTAL VALUE IF EACH BIDDER
+	      message.append("--------------------------------------------NEW AUCTION--------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+//	      PRINT BIDDER'S ID
+	      message.append("Bidder ID\t");
+	      for(int i=0; i<Distribution.numberOfBidders; i++) {
+	    	  if(i==(bidderVal.length-1))
+	    		  message.append("|" + (i+1) + "\t|\n");
+	    	  else message.append("|" + (i+1) + "\t");
+	      }
+//	      PRINT BIDDER VALUE
+	      message.append("Bidder value\t");
+	      for(int i=0; i<bidderVal.length; i++) {
+	    	  if(i==(bidderVal.length-1))
+	    		  message.append("|" +form.format(bidderVal[i]) + "\t|\n");
+	    	  else message.append("|" + form.format(bidderVal[i])+ "\t");
+	      }
+	      
+//	      PRINT BIDDER UNIT
+	      message.append("Bidder unit\t");
+	      for(int i=0; i<bidderUnit.length; i++) {
+				if(i==(bidderVal.length-1))
+					message.append("|" +formInt.format(bidderUnit[i]) + "\t|\n");
+				else message.append("|" + formInt.format(bidderUnit[i])+ "\t");
+		  }
+	      message.append("Total value\t");
+	      for(int i=0; i<newVal.length; i++) {
+	    	  if(i==(newVal.length-1))
+	    		  message.append("|" +form.format(newVal[i]) + "\t|\n");
+	    	  else message.append("|" + form.format(newVal[i])+ "\t");
+	      }
+	      message.append("-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+	      
+	      
+	      double[][] alloc = genMatrixAlloc(newVal, bidderUnit, sellerUnit, false, 0);
+	      
+	      getWelfare(alloc);
+	      
+	      double[] winners = determineWinner(newVal, bidderUnit, sellerUnit, alloc);
+	      
+	      double[][] price = genPrice(newVal, bidderUnit, sellerUnit, winners);
+	     
+	      message.append("Winners: ");
+	      for(int i=0; i<winners.length; i++) {
+	    	  if(i<winners.length-1) 
+	    		  message.append(formInt.format(winners[i]) + ", ");
+	    	  else message.append("" + formInt.format(winners[i]));
+	      }
+	      message.append("\nSocial welfare: ");
+	      message.append("" + form.format(alloc[Distribution.numAuction][(int) sellerUnit]));
+	      message.append("\n--------------------------------------------------------------------------------------------------------\n");
+	      message.append("Winners\t|Trading Price\t|Bidding Price\t|Bidding Unit\t|Ratio\t|\n");
+//	      PRINT RESULT OF AUCTION
+	      for (double[] rows : price) {
+		      for (int i=0; i<rows.length; i++) {
+		    	  if(i!=4 && i!=5 && i!=7) {
+		    		  if(i==0)
+			    		  message.append(formInt.format(rows[i]) + "\t|");
+			    	  else 
+			    		  message.append(form.format(rows[i]) + "\t|");  
+		    	  }
+		    	  
+		      }
+		      message.append("\n");
+	      }
+	      message.append("--------------------------------------------------------------------------------------------------------\n");
+	      
+//	      CALCULATE MEANPRICE PER UNIT
+	      int row = price.length;
+	      int col = price[0].length;
+	      
+	      message.append("Total revenue: " + form.format(price[row-1][5]) + " \nTotal unit sold: " + formInt.format(price[row-1][4]));
+	      message.append("\nPrice per unit: " + form.format(price[row-1][5]/price[row-1][4]));
+	      message.append("\nAvg trading price ratio: " + form.format(price[row-1][col-1]) + "\n");
+	      
+	      
+	      double temp[][] = new double[1][2];
+//	      PRICE PER UNIT
+	      temp[0][0] = price[row-1][5]/price[row-1][4];
+//	      AVG TRADING PRICE
+	      temp[0][1] = price[row-1][col-1];
+
 	}
 	
 	public static double[] generateBiddingValue(double val[], double unit[]) {
