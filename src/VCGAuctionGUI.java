@@ -35,9 +35,9 @@ public class VCGAuctionGUI extends JFrame{
 	// tab1
 	static JLabel numAuctionLabel = new JLabel("Input the number of auctions: ");
 	static JTextField numAuctionText = new JTextField();
-	static JLabel numBidderLabel = new JLabel("Input the number of bidders (m): ");
+	static JLabel numBidderLabel = new JLabel("Input the number of bidders (b): ");
 	static JTextField numBidderText = new JTextField();
-	static JLabel numSellerUnitLabel = new JLabel("Input the number of seller's unit (n): ");
+	static JLabel numSellerUnitLabel = new JLabel("Input the number of seller's unit (s): ");
 	static JTextField numSellerUnitText = new JTextField();
 	static JLabel meanValueLabel = new JLabel("Input mean value ($): ");
 	static JTextField meanValueText = new JTextField();
@@ -55,7 +55,7 @@ public class VCGAuctionGUI extends JFrame{
 	
 	private static void createAndShowGUI() {
         JFrame.setDefaultLookAndFeelDecorated(true);
-        JFrame frame = new JFrame("Double Auction Simulations");
+        JFrame frame = new JFrame("VCG Auction Simulations");
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(720, 720);
@@ -179,7 +179,7 @@ public class VCGAuctionGUI extends JFrame{
 		if (Distribution.numberOfBidders < 1) {
 			runSim = false;
 			messageText.append("\nError: The number of bidders must be a positive integer!");
-		} else messageText.append("\nm = " + Distribution.numberOfBidders);
+		} else messageText.append("\nb = " + Distribution.numberOfBidders);
 //		CHECK NUMBER OF SELLER UNIT
 		try {
 			Distribution.sellUnit = Integer.parseInt(numSellerUnitText.getText());
@@ -190,7 +190,7 @@ public class VCGAuctionGUI extends JFrame{
 		if (Distribution.sellUnit < 1) {
 			runSim = false;
 			messageText.append("\nError: The number of sell unit must be a positive integer!");
-		} else messageText.append("\nn = " + Distribution.sellUnit);
+		} else messageText.append("\ns = " + Distribution.sellUnit);
 //		CHECK MEAN VALUES
 		try {
 			Distribution.meanValue = Double.parseDouble(meanValueText.getText());
@@ -223,7 +223,7 @@ public class VCGAuctionGUI extends JFrame{
 		if (Distribution.defaultPriceDeviation < 0) {
 			runSim = false;
 			messageText.append("\nError: The price deviation must be a positive value!");
-		} else messageText.append("\ndeviation = " + Distribution.defaultPriceDeviation);
+		} else messageText.append("\nPriceDeviation = " + Distribution.defaultPriceDeviation);
 //		CHECK UNIT DEVIATION
 		try {
 			Distribution.defaultUnitDeviation = Double.parseDouble(unitDeviationText.getText());
@@ -234,7 +234,7 @@ public class VCGAuctionGUI extends JFrame{
 		if (Distribution.defaultUnitDeviation < 0) {
 			runSim = false;
 			messageText.append("\nError: The unit deviation must be a positive value!");
-		} else messageText.append("\ndeviation = " + Distribution.defaultUnitDeviation);
+		} else messageText.append("\nUnitDeviation = " + Distribution.defaultUnitDeviation);
 		
 		messageText.append("\n---------------------\n");
 		

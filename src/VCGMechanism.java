@@ -30,8 +30,8 @@ public class VCGMechanism {
 		while(deviation <= maxDeviation) {
 			
 			for(int i=0; i < Distribution.numAuction; i++) {
-				
-				double[][] temp = processAuction(deviation,0);
+				//processAuction(priceDeviation, unitDeviation)
+				double[][] temp = processAuction(0,deviation);
 				plotTradingPrice[i] = temp[0][0];
 				plotRatio[i] = temp[0][1];
 				
@@ -42,18 +42,19 @@ public class VCGMechanism {
 				if (maxAvgRatio < plotRatio[i]) maxAvgRatio = plotRatio[i];
 				if (minAvgRatio > plotRatio[i]) minAvgRatio = plotRatio[i];
 				totalRatio += plotRatio[i];
-		
+				
 			}
-			System.out.println("PriceUnit \n max: " + form.format(maxAvgPriceUnit-totalPriceUnit/10) + " - min: " + form.format(totalPriceUnit/10 - minAvgPriceUnit) + " - avg: " + form.format(totalPriceUnit/10));
-			System.out.println("Ratio \n max: " + form.format(maxAvgRatio-totalRatio/10) + " - min: " + form.format(totalRatio/10 - minAvgRatio) + " - avg: " + form.format(totalRatio/10));		
-			
-			plotAvgPrice[plotIndex] = totalPriceUnit/10;
-			plotUpPrice[plotIndex] = maxAvgPriceUnit-totalPriceUnit/10;
-			plotLowPrice[plotIndex] = totalPriceUnit/10 - minAvgPriceUnit;
-			
-			plotAvgRatio[plotIndex] = totalRatio/10;
-			plotUpRatio[plotIndex] = maxAvgRatio-totalRatio/10;
-			plotLowRatio[plotIndex] = totalRatio/10 - minAvgRatio;
+//			System.out.println("PriceUnit \n max: " + form.format(maxAvgPriceUnit-totalPriceUnit/Distribution.numAuction) + " - min: " + form.format(totalPriceUnit/Distribution.numAuction - minAvgPriceUnit) + " - avg: " + form.format(totalPriceUnit/Distribution.numAuction));
+//			System.out.println("Ratio \n max: " + form.format(maxAvgRatio-totalRatio/Distribution.numAuction) + " - min: " + form.format(totalRatio/Distribution.numAuction - minAvgRatio) + " - avg: " + form.format(totalRatio/Distribution.numAuction));		
+//			
+			//impact on Seller
+			plotAvgPrice[plotIndex] = totalPriceUnit/Distribution.numAuction;
+//			plotUpPrice[plotIndex] = maxAvgPriceUnit-totalPriceUnit/Distribution.numAuction;
+//			plotLowPrice[plotIndex] = totalPriceUnit/Distribution.numAuction - minAvgPriceUnit;
+			//impact in bidder
+			plotAvgRatio[plotIndex] = totalRatio/Distribution.numAuction;
+//			plotUpRatio[plotIndex] = maxAvgRatio-totalRatio/Distribution.numAuction;
+//			plotLowRatio[plotIndex] = totalRatio/Distribution.numAuction - minAvgRatio;
 			
 			totalPriceUnit = 0;
 			totalRatio = 0;
@@ -67,19 +68,37 @@ public class VCGMechanism {
 		
 		System.out.println("-------------------------------Plot Price------------------------------");
 		printFormatDouble(plotAvgPrice);
-		printFormatDouble(plotUpPrice);
-		printFormatDouble(plotLowPrice);
+//		printFormatDouble(plotUpPrice);
+//		printFormatDouble(plotLowPrice);
 		System.out.println("-------------------------------Plot Ratio------------------------------");
 		printFormatDouble(plotAvgRatio);
-		printFormatDouble(plotUpRatio);
-		printFormatDouble(plotLowRatio);
+//		printFormatDouble(plotUpRatio);
+//		printFormatDouble(plotLowRatio);
+		System.out.println("-------------------------------Average------------------------------");
+		double sumRatio = 0;
+		double sumPrice = 0;
+		for (double d:plotAvgRatio) sumRatio+= d;
+		for (double d:plotAvgPrice) sumPrice+= d;
+		System.out.println("Avg Ratio: " + sumRatio/ plotAvgRatio.length);
+		System.out.println("Avg Price: " + sumPrice/ plotAvgPrice.length);
 	}
 	
 	public static void runSimulation(TextArea message) {
+		double[] avgRatio = new double[Distribution.numAuction];
 		for(int i=0; i<Distribution.numAuction; i++) {
-			processAuction(message);
+//			processAuction(message);
+			avgRatio[i] = processAuction(message);
 		}
-		
+		printFormatDouble(avgRatio);
+		double sumRatio = 0;
+		double min = Double.MAX_VALUE, max = 0;
+		for (double d:avgRatio) {
+			if(d < min) min = d;
+			if(d > max) max = d;
+			sumRatio+= d;
+		}
+		System.out.println("Avg ratio: " + sumRatio/ avgRatio.length);
+		System.out.println("Max: " + (max - (sumRatio/ avgRatio.length)) + " - Min: " + ((sumRatio/ avgRatio.length) - min));
 	} 
 	
 //	PROCESS AUCTION WITH LOG
@@ -149,7 +168,7 @@ public class VCGMechanism {
 	}
 	
 //	PROCESS AUCTION WITH INTERFACE
-	public static void processAuction(TextArea message) {
+	public static double processAuction(TextArea message) {
 	      double sellerUnit = Distribution.sellUnit; //total number of units of seller
 	      
 	      Distribution.generateData(Distribution.defaultPriceDeviation, Distribution.defaultUnitDeviation);
@@ -207,7 +226,7 @@ public class VCGMechanism {
 	    	  else message.append("" + formInt.format(winners[i]));
 	      }
 	      message.append("\nSocial welfare: ");
-	      message.append("" + form.format(alloc[Distribution.numAuction][(int) sellerUnit]));
+	      message.append("" + form.format(getWelfare(alloc)));
 	      message.append("\n--------------------------------------------------------------------------------------------------------\n");
 	      message.append("Winners\t|Trading Price\t|Bidding Price\t|Bidding Unit\t|Ratio\t|\n");
 //	      PRINT RESULT OF AUCTION
@@ -235,10 +254,12 @@ public class VCGMechanism {
 	      
 	      
 	      double temp[][] = new double[1][2];
-//	      PRICE PER UNIT
+//	      UNIT PRICE
 	      temp[0][0] = price[row-1][5]/price[row-1][4];
-//	      AVG TRADING PRICE
+//	      AVG RATIO
 	      temp[0][1] = price[row-1][col-1];
+	      
+	      return temp[0][0];
 
 	}
 	
@@ -273,15 +294,15 @@ public class VCGMechanism {
 		
 //		REMOVE BIDDERS DONT WIN	AND PRINT WINNERS	
 		double[] newWinners = new double[indexWinners];
-		System.out.print("Winners: ");
+//		System.out.print("Winners: ");
 		for(int i=0; i<winners.length; i++) {
 			if(winners[i]>-1) {
 				newWinners[i] = winners[i];
-				System.out.print(formInt.format(winners[i]) + ", ");
+//				System.out.print(formInt.format(winners[i]) + ", ");
 			}
 		}	
 //		PRINT SOCIAL WELFARE
-		System.out.println("\nSocial welfare: " + form.format(alloc[val.length][(int) sUnit]));
+//		System.out.println("\nSocial welfare: " + form.format(alloc[val.length][(int) sUnit]));
 		
 		return newWinners;
 	}
@@ -307,7 +328,9 @@ public class VCGMechanism {
 			
 			
 			//trading price
-			if(newWelfare - othersWelfare == 0) allocPrice[i][1] = val[(int) (winners[i]-1)];
+			if(newWelfare - othersWelfare < 0.00001) {
+				allocPrice[i][1] = val[(int) (winners[i]-1)];
+			}
 			else allocPrice[i][1] = newWelfare - othersWelfare;
 			//biding price
 			allocPrice[i][2] = val[(int) (winners[i]-1)];
